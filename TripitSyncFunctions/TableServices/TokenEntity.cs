@@ -18,5 +18,6 @@ namespace TripitSyncFunctions.TableServices
         public string RefreshToken { get; set; }
         public string ADObjectId { get; set; }
         public string ADTenantId { get; set; }
+        public string TripItUrl { get; set; }
     }
 }
