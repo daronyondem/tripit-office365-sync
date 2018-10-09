@@ -16,8 +16,6 @@ namespace TripitSyncFunctions
     //Register your app at https://apps.dev.microsoft.com
     public static class Authorize
     {
-        private const string AuthorizationUrl = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id={0}&redirect_uri={1}&response_type=code&scope=offline_access%20user.read%20Calendars.ReadWrite";
-
         [FunctionName("Authorize")]
         public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)]HttpRequest req, ILogger log, ExecutionContext context)
         {
@@ -29,10 +27,7 @@ namespace TripitSyncFunctions
             var clientId = config["AppClientId"];
             var returnUrl = "http://" + req.Host + "/api/tokenize";
 
-            string authorizationUrl = string.Format(
-                AuthorizationUrl,
-                clientId,
-                System.Net.WebUtility.UrlEncode(returnUrl));
+            var authorizationUrl = $"https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id={clientId}&redirect_uri={System.Net.WebUtility.UrlEncode(returnUrl)}&response_type=code&scope=openid%20profile%20offline_access%20user.read%20Calendars.ReadWrite&nonce={Guid.NewGuid().ToString("N")}";
 
             return new RedirectResult(authorizationUrl);
         }

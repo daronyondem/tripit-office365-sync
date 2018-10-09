@@ -1,23 +1,25 @@
 
-using System;
-using System.IO;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Azure.WebJobs.Host;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.Table;
+using System;
+using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Net;
+using System.Threading.Tasks;
+using TripitSyncFunctions.Model;
+using TripitSyncFunctions.TableServices;
 
 namespace TripitSyncFunctions
 {
     public static class Tokenize
     {
         private const string TokenizationUrl = "https://login.microsoftonline.com/common/oauth2/v2.0/token";
-        private const string TokenizationRequestBody = "grant_type=authorization_code&code={0}&redirect_uri={1}&client_id={2}&client_secret={3}";
 
         [FunctionName("Tokenize")]
         public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)]HttpRequest req, ILogger log, ExecutionContext context)
@@ -32,14 +34,39 @@ namespace TripitSyncFunctions
             var clientId = config["AppClientId"];
             var clientSecret = config["AppSecret"];
 
-            var tokenizationRequestBody = string.Format(TokenizationRequestBody, code, System.Net.WebUtility.UrlEncode(returnUrl), clientId, System.Net.WebUtility.UrlEncode(clientSecret));
+            var tokenizationRequestBody = $"grant_type=authorization_code&code={code}&redirect_uri={System.Net.WebUtility.UrlEncode(returnUrl)}&client_id={clientId}&client_secret={System.Net.WebUtility.UrlEncode(clientSecret)}";
 
+            AuthToken token = null;
             using (WebClient wc = new WebClient())
             {
                 wc.Headers[HttpRequestHeader.ContentType] = "application/x-www-form-urlencoded";
                 string result = wc.UploadString(TokenizationUrl, tokenizationRequestBody);
-                dynamic data = JsonConvert.DeserializeObject(result);
-                return (ActionResult)new OkObjectResult(data);
+                token = AuthToken.FromJson(result);
+            }
+            if(token!=null)
+            {
+                var jwtHandler = new JwtSecurityTokenHandler();
+                var jwtToken = jwtHandler.ReadJwtToken(token.IdToken);
+
+                CloudStorageAccount storageAccount = CloudStorageAccount.Parse(config["Storage"]);
+                CloudTableClient tableClient = storageAccount.CreateCloudTableClient();
+                CloudTable tokenTable = tableClient.GetTableReference("tokenTable");
+                TokenEntity tokenEntity = new TokenEntity
+                {
+                    AccessToken = token.AccessToken,
+                    RefreshToken = token.RefreshToken,
+                    ADObjectId = jwtToken.Claims.FirstOrDefault(x => x.Type == "oid")?.Value,
+                    ADTenantId = jwtToken.Claims.FirstOrDefault(x => x.Type == "tid")?.Value
+                };
+                TableOperation insertOperation = TableOperation.Insert(tokenEntity);
+                await tokenTable.ExecuteAsync(insertOperation);
+
+                return new OkResult();
+            }
+            else
+            {
+                log.LogInformation($"Auth token null received at: {DateTime.Now}");
+                return new StatusCodeResult((int)HttpStatusCode.InternalServerError);
             }
         }
     }
