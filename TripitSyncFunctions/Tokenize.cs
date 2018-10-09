@@ -9,8 +9,10 @@ using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Table;
 using System;
 using System.IdentityModel.Tokens.Jwt;
+using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 using TripitSyncFunctions.Model;
 using TripitSyncFunctions.TableServices;
@@ -51,17 +53,28 @@ namespace TripitSyncFunctions
                 CloudStorageAccount storageAccount = CloudStorageAccount.Parse(config["Storage"]);
                 CloudTableClient tableClient = storageAccount.CreateCloudTableClient();
                 CloudTable tokenTable = tableClient.GetTableReference("tokenTable");
-                TokenEntity tokenEntity = new TokenEntity
+                TokenEntity tokenEntity = new TokenEntity()
                 {
                     AccessToken = token.AccessToken,
                     RefreshToken = token.RefreshToken,
                     ADObjectId = jwtToken.Claims.FirstOrDefault(x => x.Type == "oid")?.Value,
-                    ADTenantId = jwtToken.Claims.FirstOrDefault(x => x.Type == "tid")?.Value
+                    ADTenantId = jwtToken.Claims.FirstOrDefault(x => x.Type == "tid")?.Value,
+                    PartitionKey= jwtToken.Claims.FirstOrDefault(x => x.Type == "tid")?.Value,
+                    RowKey = jwtToken.Claims.FirstOrDefault(x => x.Type == "oid")?.Value
                 };
-                TableOperation insertOperation = TableOperation.Insert(tokenEntity);
+                TableOperation insertOperation = TableOperation.InsertOrMerge(tokenEntity);
                 await tokenTable.ExecuteAsync(insertOperation);
 
-                return new OkResult();
+                using (StreamReader sr = new StreamReader(System.IO.Path.Combine(context.FunctionDirectory, "..\\Assets\\tripit-uri-input.html")))
+                {
+                    string html = await sr.ReadToEndAsync().ConfigureAwait(false);
+                    html = html.Replace("{tenantId}", tokenEntity.ADTenantId).Replace("{objectId}", tokenEntity.ADObjectId);
+                    return new ContentResult()
+                    {
+                        Content = html,
+                        ContentType = "text/html",
+                    };
+                }
             }
             else
             {
