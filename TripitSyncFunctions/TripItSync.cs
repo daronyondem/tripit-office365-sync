@@ -13,7 +13,7 @@ namespace TripitSyncFunctions
     public static class TripItSync
     {
         [FunctionName("TripItSync")]
-        public static void Run([TimerTrigger("* */10 * * * *")]TimerInfo myTimer, ILogger log, ExecutionContext context)
+        public static void Run([TimerTrigger("0 */10 * * * *")]TimerInfo myTimer, ILogger log, ExecutionContext context)
         {
             var config = new ConfigurationBuilder()
                         .SetBasePath(context.FunctionAppDirectory)
