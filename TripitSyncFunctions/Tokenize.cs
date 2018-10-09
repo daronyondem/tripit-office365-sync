@@ -22,7 +22,7 @@ namespace TripitSyncFunctions
         private const string TokenizationUrl = "https://login.microsoftonline.com/common/oauth2/v2.0/token";
 
         [FunctionName("Tokenize")]
-        public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)]HttpRequest req, ILogger log, ExecutionContext context)
+        public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)]HttpRequest req, ILogger log, ExecutionContext context)
         {
             string code = req.Query["code"];
             var returnUrl = "http://" + req.Host + "/api/tokenize";

@@ -17,7 +17,7 @@ namespace TripitSyncFunctions
     public static class Authorize
     {
         [FunctionName("Authorize")]
-        public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)]HttpRequest req, ILogger log, ExecutionContext context)
+        public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)]HttpRequest req, ILogger log, ExecutionContext context)
         {
             var config = new ConfigurationBuilder()
                        .SetBasePath(context.FunctionAppDirectory)
