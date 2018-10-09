@@ -25,7 +25,7 @@ namespace TripitSyncFunctions
                        .AddEnvironmentVariables()
                        .Build();
             var clientId = config["AppClientId"];
-            var returnUrl = "http://" + req.Host + "/api/tokenize";
+            var returnUrl = $"http://{req.Host}/api/tokenize";
 
             var authorizationUrl = $"https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id={clientId}&redirect_uri={System.Net.WebUtility.UrlEncode(returnUrl)}&response_type=code&scope=openid%20profile%20offline_access%20user.read%20Calendars.ReadWrite&nonce={Guid.NewGuid().ToString("N")}";
 
