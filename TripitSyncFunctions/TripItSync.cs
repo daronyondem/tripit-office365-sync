@@ -77,7 +77,21 @@ namespace TripitSyncFunctions
                     webClient.Headers.Add(HttpRequestHeader.Authorization, $"Bearer {access_token}");
                     try
                     {
-                        var response = webClient.UploadString("https://graph.microsoft.com/v1.0/me/calendar/events", newCalenderEvent.ToJson());
+                        var eventJson = newCalenderEvent.ToJson();
+                        var response = webClient.UploadString("https://graph.microsoft.com/v1.0/me/calendar/events", eventJson);
+                        EventResponse eventInsertResponse = EventResponse.FromJson(response);
+
+                        CloudTable eventRecordsTable = tableClient.GetTableReference("eventRecords");
+                        EventRecordEntity eventRecord = new EventRecordEntity()
+                        {
+                            PartitionKey = currentTokenEntity.PartitionKey,
+                            RowKey = item.ContentLines["UID"].Value,
+                            Hash= Helpers.Checksum.CalculateMD5(eventJson),
+                            GraphId = eventInsertResponse.Id,
+                            TripItUId = item.ContentLines["UID"].Value
+                        };
+                        TableOperation insertOperation = TableOperation.InsertOrMerge(eventRecord);
+                        await eventRecordsTable.ExecuteAsync(insertOperation);
                     }
                     catch (WebException exception)
                     {
