@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 
-namespace TripitSyncFunctions.Model
+namespace TripitSyncFunctions.GraphModel
 {
     public partial class AuthToken
     {
@@ -33,12 +33,12 @@ namespace TripitSyncFunctions.Model
 
     public partial class AuthToken
     {
-        public static AuthToken FromJson(string json) => JsonConvert.DeserializeObject<AuthToken>(json, Model.Converter.Settings);
+        public static AuthToken FromJson(string json) => JsonConvert.DeserializeObject<AuthToken>(json, GraphModel.Converter.Settings);
     }
 
     public static class Serialize
     {
-        public static string ToJson(this AuthToken self) => JsonConvert.SerializeObject(self, Model.Converter.Settings);
+        public static string ToJson(this AuthToken self) => JsonConvert.SerializeObject(self, GraphModel.Converter.Settings);
     }
 
     internal static class Converter
