@@ -13,13 +13,14 @@ using System.Globalization;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Table;
 using TripitSyncFunctions.TableServices;
+using System.Threading.Tasks;
 
 namespace TripitSyncFunctions
 {
     public static class TripItSync
     {
         [FunctionName("TripItSync")]
-        public static void Run([TimerTrigger("0 */10 * * * *")]TimerInfo myTimer, ILogger log, ExecutionContext context)
+        public static async Task Run([TimerTrigger("0 */10 * * * *")]TimerInfo myTimer, ILogger log, ExecutionContext context)
         {
             var config = new ConfigurationBuilder()
                         .SetBasePath(context.FunctionAppDirectory)
@@ -32,7 +33,7 @@ namespace TripitSyncFunctions
             CloudTable tokenTable = tableClient.GetTableReference("tokenTable");
             //TODO:Iterate through tenants instead of getting the top one.
             TableQuery<TokenEntity> query = new TableQuery<TokenEntity>().Take(1);
-            TableQuerySegment<TokenEntity> resultSegment = tokenTable.ExecuteQuerySegmentedAsync(query, null).Result;
+            TableQuerySegment<TokenEntity> resultSegment = await tokenTable.ExecuteQuerySegmentedAsync(query, null);
 
             TokenEntity currentTokenEntity = resultSegment.Results.FirstOrDefault();
             var tripItUrl = currentTokenEntity.TripItUrl;
@@ -93,7 +94,6 @@ namespace TripitSyncFunctions
                             }
                         }
                     }
-
                 }
             }
         }
