@@ -12,10 +12,10 @@ namespace TripitSyncFunctions.GraphModel
         public string Subject { get; set; }
 
         [JsonProperty("Start", NullValueHandling = NullValueHandling.Ignore)]
-        public End Start { get; set; }
+        public EventTime Start { get; set; }
 
         [JsonProperty("End", NullValueHandling = NullValueHandling.Ignore)]
-        public End End { get; set; }
+        public EventTime End { get; set; }
 
         [JsonProperty("ShowAs", NullValueHandling = NullValueHandling.Ignore)]
         public string ShowAs { get; set; }
@@ -25,6 +25,9 @@ namespace TripitSyncFunctions.GraphModel
 
         [JsonProperty("Body", NullValueHandling = NullValueHandling.Ignore)]
         public Body Body { get; set; }
+
+        [JsonProperty("Location", NullValueHandling = NullValueHandling.Ignore)]
+        public Location Location { get; set; }
 
         [JsonProperty("IsReminderOn", NullValueHandling = NullValueHandling.Ignore)]
         public bool? IsReminderOn { get; set; }
@@ -39,13 +42,22 @@ namespace TripitSyncFunctions.GraphModel
         public string Content { get; set; }
     }
 
-    public partial class End
+    public partial class EventTime
     {
         [JsonProperty("DateTime", NullValueHandling = NullValueHandling.Ignore)]
         public DateTimeOffset? DateTime { get; set; }
 
         [JsonProperty("TimeZone", NullValueHandling = NullValueHandling.Ignore)]
         public string TimeZone { get; set; }
+    }
+
+    public partial class Location
+    {
+        [JsonProperty("DisplayName", NullValueHandling = NullValueHandling.Ignore)]
+        public string DisplayName { get; set; }
+
+        [JsonProperty("Address")]
+        public object Address { get; set; }
     }
 
     public partial class Event
