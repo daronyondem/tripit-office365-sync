@@ -36,7 +36,7 @@ namespace TripitSyncFunctions.GraphModel
         public static AuthToken FromJson(string json) => JsonConvert.DeserializeObject<AuthToken>(json, GraphModel.Converter.Settings);
     }
 
-    public static class Serialize
+    public static partial class Serialize
     {
         public static string ToJson(this AuthToken self) => JsonConvert.SerializeObject(self, GraphModel.Converter.Settings);
     }
